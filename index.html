@@ -357,21 +357,6 @@ NGA</textarea>
       </div>
 
       <div class="control-group">
-        <label for="textSizeSlider">Text size</label>
-        <div class="slider-row">
-          <input
-            id="textSizeSlider"
-            type="range"
-            min="1"
-            max="10"
-            step="1"
-            value="10"
-          />
-          <div class="slider-value" id="textSizeValue">10x</div>
-        </div>
-      </div>
-
-      <div class="control-group">
         <label for="textLineSpacingSlider">Line spacing</label>
         <div class="slider-row">
           <input
@@ -639,8 +624,6 @@ NGA</textarea>
       const uploadSvgBtn = document.getElementById("uploadSvgBtn");
       const svgFileInput = document.getElementById("svgFileInput");
       const shapeButtonsContainer = document.getElementById("shapeButtons");
-      const textSizeSlider = document.getElementById("textSizeSlider");
-      const textSizeValue = document.getElementById("textSizeValue");
       const textLineSpacingSlider = document.getElementById("textLineSpacingSlider");
       const textLineSpacingValue = document.getElementById("textLineSpacingValue");
       const letterSpacingSlider = document.getElementById("letterSpacingSlider");
@@ -1455,7 +1438,7 @@ NGA</textarea>
         waveFrequency = Number(frequencySlider.value) / 100 || 0.01;
         angleDeg = Number(angleSlider.value) || 0;
         angleRad = (angleDeg * Math.PI) / 180;
-        textScale = Number(textSizeSlider.value) || 1;
+        textScale = 10;
         textLineSpacing = Number(textLineSpacingSlider.value) || 80;
         letterSpacingPct = Number(letterSpacingSlider.value);
         if (Number.isNaN(letterSpacingPct)) letterSpacingPct = 0;
@@ -1465,7 +1448,6 @@ NGA</textarea>
         speedValue.textContent = tideSpeed.toFixed(2);
         frequencyValue.textContent = waveFrequency.toFixed(2);
         angleValue.textContent = `${angleDeg}°`;
-        textSizeValue.textContent = `${textScale}x`;
         textLineSpacingValue.textContent = `${textLineSpacing}%`;
         letterSpacingValue.textContent =
           letterSpacingPct === 0 ? "0" : `${(letterSpacingPct / 100).toFixed(2)}em`;
@@ -1479,7 +1461,6 @@ NGA</textarea>
         updateSliderThumb(speedSlider, speedValue);
         updateSliderThumb(frequencySlider, frequencyValue);
         updateSliderThumb(angleSlider, angleValue);
-        updateSliderThumb(textSizeSlider, textSizeValue);
         updateSliderThumb(textLineSpacingSlider, textLineSpacingValue);
         updateSliderThumb(letterSpacingSlider, letterSpacingValue);
       }
@@ -1560,11 +1541,6 @@ NGA</textarea>
       });
 
       speedSlider.addEventListener("input", () => {
-        updateFromControls();
-        render(accumulatedTime);
-      });
-
-      textSizeSlider.addEventListener("input", () => {
         updateFromControls();
         render(accumulatedTime);
       });
@@ -1952,7 +1928,6 @@ NGA</textarea>
         speedSlider.value = String(tideSpeed * 100);
         frequencySlider.value = String(waveFrequency * 100);
         angleSlider.value = String(angleDeg);
-        textSizeSlider.value = String(textScale);
         textLineSpacingSlider.value = String(textLineSpacing);
         letterSpacingSlider.value = String(letterSpacingPct);
         if (alternateShapesCheck) alternateShapesCheck.checked = true;
@@ -2016,7 +1991,6 @@ NGA</textarea>
         input.value = randomTextOptions[randInt(0, randomTextOptions.length - 1)];
         spacingSlider.value = String(spacing);
         sizeSlider.value = String(size);
-        textSizeSlider.value = String(randInt(3, 10));
         speedSlider.value = String(randInt(0, 200));
         frequencySlider.value = String(randInt(5, 200));
         angleSlider.value = String(randInt(0, 360));
@@ -2058,7 +2032,6 @@ NGA</textarea>
         setMotionActive(motionPattern);
         spacingSlider.value = String(gapX);
         sizeSlider.value = String(tileSize);
-        textSizeSlider.value = String(textScale);
         textLineSpacingSlider.value = String(textLineSpacing);
         letterSpacingSlider.value = String(letterSpacingPct);
         speedSlider.value = String(tideSpeed * 100);
@@ -2066,7 +2039,6 @@ NGA</textarea>
         angleSlider.value = String(angleDeg);
         attachSmoothSlider(spacingSlider, spacingValue);
         attachSmoothSlider(sizeSlider, sizeValue);
-        attachSmoothSlider(textSizeSlider, textSizeValue);
         attachSmoothSlider(textLineSpacingSlider, textLineSpacingValue);
         attachSmoothSlider(letterSpacingSlider, letterSpacingValue);
         attachSmoothSlider(speedSlider, speedValue);
