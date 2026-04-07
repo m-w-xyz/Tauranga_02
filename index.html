@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guardians_Tauranga_02</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+ 
+      html {
+        height: 100%;
+      }
+
+      body {
+        background: #000;
+        color: #fff;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        min-height: 100%;
+        min-height: 100dvh;
+        overflow: hidden;
+      }
+
+      /* Full-viewport canvas; control panel is layered above and does not affect centering */
+      .controls {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: auto;
+        max-height: 100vh;
+        max-height: 100dvh;
+        width: 260px;
+        padding: 0.75rem 0.75rem 1rem;
+        background: #1a1a1a;
+        color: #fff;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        z-index: 20;
+        font-size: 12px;
+        transition: transform 0.3s ease-in-out;
+        overflow-y: auto;
+      }
+
+      .controls.collapsed {
+        transform: translateX(258px);
+      }
+
+      #toggle-panel {
+        position: fixed;
+        top: 1px;
+        right: 260px;
+        width: 32px;
+        height: 32px;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 0;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 21;
+        transition: background 0.2s, right 0.3s ease-in-out;
+      }
+
+      #toggle-panel:hover {
+        background: #2a2a2a;
+      }
+
+      .button-row {
+        display: flex;
+        gap: 0.25rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .controls button {
+        flex: 1;
+        padding: 3px 6px;
+        border: none;
+        border-radius: 0;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        background: #1b1b1b;
+        color: #eee;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .controls button:hover {
+        background: #2a2a2a;
+      }
+
+      .controls button.small {
+        flex: 0 0 auto;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .control-group.divider-top {
+        border-top: 1px solid #333;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .controls label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #ccc;
+      }
+
+      .label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+
+      .controls button.toggle-on {
+        background: #f5f5f5;
+        color: #000;
+      }
+
+      .controls #textInput {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0;
+        border: none;
+        background: #111;
+        color: #f5f5f5;
+        font: inherit;
+        outline: none;
+        text-align: center;
+        resize: vertical;
+        min-height: 3.25rem;
+        line-height: 1.35;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+
+      .controls #textInput::placeholder {
+        color: #666;
+      }
+
+      .slider-row {
+        position: relative;
+        height: 18px;
+        background: #050505;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .controls input[type="range"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .controls input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 0;
+        height: 0;
+      }
+
+      .slider-value {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        min-width: 40px;
+        background: #3a3a3a;
+        text-align: center;
+        padding: 2px 4px;
+        font-size: 11px;
+        color: #f5f5f5;
+        pointer-events: none;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        left: 0;
+      }
+
+      .motion-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+
+      .motion-buttons .motion-btn {
+        flex: 1 1 calc(50% - 0.125rem);
+        min-width: 0;
+      }
+
+      .motion-buttons .motion-btn-none {
+        flex: 1 1 100%;
+        text-align: center;
+      }
+
+      .shape-buttons {
+        display: flex;
+        gap: 0.25rem;
+      }
+
+      .shape-buttons .shape-btn {
+        flex: 1;
+        padding: 0.35rem;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        background: transparent;
+      }
+
+      .shape-buttons .shape-btn img {
+        width: 100%;
+        height: auto;
+        max-height: 14px;
+        object-fit: contain;
+        display: block;
+        filter: opacity(0.45);
+      }
+
+      .shape-buttons .shape-btn.toggle-on {
+        background: transparent;
+      }
+
+      .shape-buttons .shape-btn.toggle-on img {
+        filter: none;
+      }
+
+      .shape-buttons .shape-btn.shape-hidden {
+        display: none;
+      }
+
+      .upload-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .upload-row .upload-btn {
+        padding: 4px 6px;
+        border: 1px dashed #444;
+        background: transparent;
+        color: #999;
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        text-align: center;
+        transition: border-color 0.2s, color 0.2s;
+        flex: none;
+      }
+
+      .upload-row .upload-btn:hover {
+        border-color: #888;
+        color: #ccc;
+      }
+
+      .upload-hint {
+        font-size: 9px;
+        color: #555;
+        letter-spacing: 0.04em;
+      }
+
+      .check-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+      }
+
+      .check-row input[type="checkbox"] {
+        accent-color: #f5f5f5;
+        width: 13px;
+        height: 13px;
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .canvas-wrap {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+      }
+
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #000;
+      }
+
+      @media (max-width: 600px) {
+        .controls {
+          width: 98vw;
+        }
+        .controls.collapsed {
+          transform: translateX(90vw);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" id="toggle-panel" aria-label="Toggle panel">✕</button>
+    <div class="controls" id="controlsPanel">
+      <div class="control-group">
+        <div class="label-row">
+          <label for="textInput">Text</label>
+          <button id="fullGridBtn" class="small">Full grid</button>
+          <button id="webcamBtn" class="small">Webcam</button>
+        </div>
+        <textarea
+          id="textInput"
+          rows="3"
+          maxlength="400"
+          spellcheck="false"
+          autocomplete="off"
+          wrap="soft"
+          placeholder="Type here…"
+        >TAU
+RA
+NGA</textarea>
+        <div class="upload-row font-upload-row">
+          <button type="button" class="upload-btn" id="uploadFontBtn">Upload font</button>
+          <input
+            type="file"
+            id="fontFileInput"
+            accept=".woff2,.woff,.ttf,.otf"
+            style="display: none"
+          />
+          <button type="button" class="upload-btn" id="clearFontBtn" hidden>Use default font</button>
+          <span class="upload-hint" id="fontStatusHint"></span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="textSizeSlider">Text size</label>
+        <div class="slider-row">
+          <input
+            id="textSizeSlider"
+            type="range"
+            min="1"
+            max="10"
+            step="1"
+            value="10"
+          />
+          <div class="slider-value" id="textSizeValue">10x</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="textLineSpacingSlider">Line spacing</label>
+        <div class="slider-row">
+          <input
+            id="textLineSpacingSlider"
+            type="range"
+            min="50"
+            max="125"
+            step="1"
+            value="80"
+          />
+          <div class="slider-value" id="textLineSpacingValue">80%</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="letterSpacingSlider">Letter spacing</label>
+        <div class="slider-row">
+          <input
+            id="letterSpacingSlider"
+            type="range"
+            min="-50"
+            max="100"
+            step="1"
+            value="0"
+          />
+          <div class="slider-value" id="letterSpacingValue">0</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="spacingSlider">
+          Grid spacing (px):
+        </label>
+        <div class="slider-row">
+          <input
+            id="spacingSlider"
+            type="range"
+            min="0"
+            max="20"
+            step="1"
+            value="0"
+          />
+          <div class="slider-value" id="spacingValue">0px</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="sizeSlider">Shape size</label>
+        <div class="slider-row">
+          <input
+            id="sizeSlider"
+            type="range"
+            min="8"
+            max="100"
+            step="1"
+            value="17"
+          />
+          <div class="slider-value" id="sizeValue">17</div>
+        </div>
+      </div>
+
+      <div class="control-group divider-top">
+        <label>Shape</label>
+        <div class="shape-buttons" id="shapeButtons">
+          <button type="button" class="shape-btn shape-hidden" data-shape="semi-circle" title="Semi-circle"><img src="./assets/semi-circle.svg" alt="Semi-circle" /></button>
+          <button type="button" class="shape-btn shape-hidden" data-shape="low" title="Low"><img src="./assets/low.svg" alt="Low" /></button>
+          <button type="button" class="shape-btn shape-hidden" data-shape="surge" title="Surge"><img src="./assets/surge.svg" alt="Surge" /></button>
+          <button type="button" class="shape-btn shape-hidden" data-shape="flat" title="Flat"><img src="./assets/flat.svg" alt="Flat" /></button>
+          <button type="button" class="shape-btn toggle-on" data-shape="barrel" title="Barrel"><img src="./assets/barrel.svg" alt="Barrel" /></button>
+        </div>
+        <div class="upload-row">
+          <button type="button" class="upload-btn" id="uploadSvgBtn">Upload SVG</button>
+          <input type="file" id="svgFileInput" accept=".svg,image/svg+xml" style="display:none" />
+          <label class="check-row">
+            <input type="checkbox" id="alternateShapesCheck" checked />
+            Alternate shapes
+          </label>
+        </div>
+      </div>
+
+      <div class="control-group divider-top">
+        <label>Motion pattern</label>
+        <div class="motion-buttons">
+          <button type="button" class="motion-btn small" data-motion="crest">Crest</button>
+          <button type="button" class="motion-btn small" data-motion="ebb">Ebb</button>
+          <button type="button" class="motion-btn small" data-motion="flow">Flow</button>
+          <button type="button" class="motion-btn small" data-motion="swell">Swell</button>
+          <button type="button" class="motion-btn small" data-motion="surge">Surge</button>
+          <button type="button" class="motion-btn small" data-motion="storm">Storm</button>
+          <button type="button" class="motion-btn motion-btn-none small" data-motion="none">None</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="speedSlider">
+          Speed
+        </label>
+        <div class="slider-row">
+          <input
+            id="speedSlider"
+            type="range"
+            min="0"
+            max="200"
+            step="1"
+            value="50"
+          />
+          <div class="slider-value" id="speedValue">0.25</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="frequencySlider">Wave spacing</label>
+        <div class="slider-row">
+          <input
+            id="frequencySlider"
+            type="range"
+            min="1"
+            max="200"
+            step="1"
+            value="15"
+          />
+          <div class="slider-value" id="frequencyValue">0.15</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="angleSlider">Angle</label>
+        <div class="slider-row">
+          <input
+            id="angleSlider"
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            value="0"
+          />
+          <div class="slider-value" id="angleValue">0°</div>
+        </div>
+      </div>
+      <div class="control-group divider-top">
+        <div class="label-row">
+          <label>Image</label>
+          <button id="clearImageBtn" class="small" style="display:none">Clear Image</button>
+        </div>
+        <div class="upload-row">
+          <button type="button" class="upload-btn" id="uploadImageBtn">Upload Image</button>
+          <input type="file" id="imageFileInput" accept="image/*" style="display:none" />
+        </div>
+      </div>
+      <div class="control-group" id="imageControls" style="display:none">
+        <label for="imgBrightnessSlider">Brightness</label>
+        <div class="slider-row">
+          <input id="imgBrightnessSlider" type="range" min="-100" max="100" step="1" value="0" />
+          <div class="slider-value" id="imgBrightnessValue">0</div>
+        </div>
+        <label for="imgContrastSlider">Contrast</label>
+        <div class="slider-row">
+          <input id="imgContrastSlider" type="range" min="-100" max="100" step="1" value="0" />
+          <div class="slider-value" id="imgContrastValue">0</div>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="invertImageCheck" />
+          Invert image
+        </label>
+      </div>
+
+      <div class="control-group divider-top">
+        <div class="label-row">
+          <label>Audio</label>
+          <button id="clearAudioBtn" class="small" style="display:none">Clear Audio</button>
+        </div>
+        <div class="upload-row">
+          <button type="button" class="upload-btn" id="uploadAudioBtn">Upload Audio</button>
+          <input type="file" id="audioFileInput" accept="audio/*" style="display:none" />
+        </div>
+      </div>
+      <div class="control-group" id="audioControls" style="display:none">
+        <div class="button-row">
+          <button id="audioPlayBtn" class="small">Play</button>
+          <button id="audioLoopBtn" class="small">Loop</button>
+        </div>
+        <label for="audioVolumeSlider">Volume</label>
+        <div class="slider-row">
+          <input id="audioVolumeSlider" type="range" min="0" max="100" step="1" value="50" />
+          <div class="slider-value" id="audioVolumeValue">50</div>
+        </div>
+        <label for="audioAmpSlider">Amplitude</label>
+        <div class="slider-row">
+          <input id="audioAmpSlider" type="range" min="0" max="200" step="1" value="200" />
+          <div class="slider-value" id="audioAmpValue">200</div>
+        </div>
+        <label for="audioSmoothing">Smoothing</label>
+        <div class="slider-row">
+          <input id="audioSmoothing" type="range" min="0" max="99" step="1" value="85" />
+          <div class="slider-value" id="audioSmoothingValue">85</div>
+        </div>
+        <label>Visualisation</label>
+        <div class="motion-buttons">
+          <button type="button" class="audio-vis-btn small toggle-on" data-vis="waveform">Waveform</button>
+          <button type="button" class="audio-vis-btn small" data-vis="tide">Tide</button>
+        </div>
+        <label>Frequency band</label>
+        <div class="motion-buttons">
+          <button type="button" class="audio-band-btn small toggle-on" data-band="all">All</button>
+          <button type="button" class="audio-band-btn small" data-band="bass">Bass</button>
+          <button type="button" class="audio-band-btn small" data-band="mid">Mid</button>
+          <button type="button" class="audio-band-btn small" data-band="high">High</button>
+        </div>
+      </div>
+
+      <div class="control-group divider-top">
+        <div class="button-row">
+          <button id="pauseBtn" class="small">Pause</button>
+          <button id="resetBtn" class="small">Reset</button>
+          <button id="randomiseBtn" class="small">Randomise</button>
+        </div>
+        <div class="button-row">
+          <button id="downloadBtn" class="small">Save PNG</button>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="transparentBgCheck" />
+          Transparent background
+        </label>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const input = document.getElementById("textInput");
+      const spacingSlider = document.getElementById("spacingSlider");
+      const sizeSlider = document.getElementById("sizeSlider");
+      const speedSlider = document.getElementById("speedSlider");
+      const motionBtns = document.querySelectorAll(".motion-btn");
+      const frequencySlider = document.getElementById("frequencySlider");
+      const angleSlider = document.getElementById("angleSlider");
+      const fullGridBtn = document.getElementById("fullGridBtn");
+      const webcamBtn = document.getElementById("webcamBtn");
+      const spacingValue = document.getElementById("spacingValue");
+      const sizeValue = document.getElementById("sizeValue");
+      const speedValue = document.getElementById("speedValue");
+      const frequencyValue = document.getElementById("frequencyValue");
+      const angleValue = document.getElementById("angleValue");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const randomiseBtn = document.getElementById("randomiseBtn");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const controlsPanel = document.getElementById("controlsPanel");
+      const togglePanelBtn = document.getElementById("toggle-panel");
+
+      const DEFAULT_TEXT = "TAU\nRA\nNGA";
+      const CANVAS_FONT_FALLBACK =
+        'Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const USER_FONT_FAMILY = "TaurangaUserFont";
+      let userFontFace = null;
+
+      const uploadFontBtn = document.getElementById("uploadFontBtn");
+      const fontFileInput = document.getElementById("fontFileInput");
+      const clearFontBtn = document.getElementById("clearFontBtn");
+      const fontStatusHint = document.getElementById("fontStatusHint");
+
+      const uploadSvgBtn = document.getElementById("uploadSvgBtn");
+      const svgFileInput = document.getElementById("svgFileInput");
+      const shapeButtonsContainer = document.getElementById("shapeButtons");
+      const textSizeSlider = document.getElementById("textSizeSlider");
+      const textSizeValue = document.getElementById("textSizeValue");
+      const textLineSpacingSlider = document.getElementById("textLineSpacingSlider");
+      const textLineSpacingValue = document.getElementById("textLineSpacingValue");
+      const letterSpacingSlider = document.getElementById("letterSpacingSlider");
+      const letterSpacingValue = document.getElementById("letterSpacingValue");
+      const uploadImageBtn = document.getElementById("uploadImageBtn");
+      const imageFileInput = document.getElementById("imageFileInput");
+      const clearImageBtn = document.getElementById("clearImageBtn");
+      const imageControlsEl = document.getElementById("imageControls");
+      const imgBrightnessSlider = document.getElementById("imgBrightnessSlider");
+      const imgBrightnessValue = document.getElementById("imgBrightnessValue");
+      const imgContrastSlider = document.getElementById("imgContrastSlider");
+      const imgContrastValue = document.getElementById("imgContrastValue");
+      const invertImageCheck = document.getElementById("invertImageCheck");
+      const uploadAudioBtn = document.getElementById("uploadAudioBtn");
+      const audioFileInput = document.getElementById("audioFileInput");
+      const clearAudioBtn = document.getElementById("clearAudioBtn");
+      const audioControlsEl = document.getElementById("audioControls");
+      const audioPlayBtn = document.getElementById("audioPlayBtn");
+      const audioLoopBtn = document.getElementById("audioLoopBtn");
+      const audioVolumeSlider = document.getElementById("audioVolumeSlider");
+      const audioVolumeValue = document.getElementById("audioVolumeValue");
+      const audioAmpSlider = document.getElementById("audioAmpSlider");
+      const audioAmpValue = document.getElementById("audioAmpValue");
+      const audioSmoothingSlider = document.getElementById("audioSmoothing");
+      const audioSmoothingValue = document.getElementById("audioSmoothingValue");
+      const audioBandBtns = document.querySelectorAll(".audio-band-btn");
+      const alternateShapesCheck = document.getElementById("alternateShapesCheck");
+      const transparentBgCheck = document.getElementById("transparentBgCheck");
+
+      // Grid + shape configuration (controlled by UI)
+      let tileSize = 17; // px (rendered size of the shape)
+      let gapX = 0; // horizontal spacing
+      let gapY = 0; // vertical spacing
+      let tideSpeed = 0.50; // animation speed multiplier
+      let motionPattern = "crest";
+      let waveFrequency = 0.15; // spatial frequency factor
+      let angleDeg = 0; // motion angle in degrees
+      let angleRad = 0; // cached radians
+      let fullGrid = false; // when true, ignore text mask
+      let textScale = 10;
+      let textLineSpacing = 80; // % of font size; row-to-row distance in mask
+      let letterSpacingPct = 0; // slider -50..100 → letter-spacing in em via /100
+      let motionPatternBeforeWebcam = "crest"; // restored when webcam turns off
+      let fullGridBeforeWebcam = false; // restored when webcam turns off
+      let alternateShapes = true;
+      let transparentBackground = false;
+
+      let bgImage = null;
+      let bgImageData = null;
+      let bgImageW = 0;
+      let bgImageH = 0;
+      let imgBrightness = 0;
+      let imgContrast = 0;
+      const bgImageCanvas = document.createElement("canvas");
+      const bgImageCtx = bgImageCanvas.getContext("2d");
+
+      let audioCtx = null;
+      let audioSource = null;
+      let audioAnalyser = null;
+      let audioGain = null;
+      let audioElement = null;
+      let audioFreqData = null;
+      let audioEnergy = 0;
+      let audioAmplitude = 2.0;
+      let audioBand = "all";
+      let audioLooping = false;
+      let audioTideSmooth = 0;
+      let audioVisMode = "waveform"; // "waveform" | "tide"
+      let audioSpectrumSmooth = null; // Float32Array, smoothed per-bin spectrum
+
+      // Webcam brightness + motion masks
+      const webcamVideo = document.createElement("video");
+      webcamVideo.autoplay = true;
+      webcamVideo.playsInline = true;
+      webcamVideo.muted = true;
+      webcamVideo.style.display = "none";
+      document.body.appendChild(webcamVideo);
+
+      const webcamCanvas = document.createElement("canvas");
+      const webcamCtx = webcamCanvas.getContext("2d");
+      let webcamData = null;
+      let webcamMotion = null; // per-pixel motion energy
+      let prevWebcamData = null;
+      let webcamStream = null;
+      let webcamActive = false;
+
+      // Hand path: accumulates where the hand has been, decays slowly (trail effect)
+      let handPathBuffer = null;
+      let handPathSmooth = null; // temporal smoothing to reduce jitter
+      const HAND_PATH_DECAY = 0.97;
+      const HAND_PATH_ADD = 0.35;
+      const HAND_PATH_MAX = 1.2;
+      const HAND_PATH_SMOOTH = 0.18; // lower = smoother, slower response
+      const HAND_DISPLACE = 90;
+      const HAND_SCALE_BOOST = 3.5;
+
+      // Simple fractal-style noise for "Storm" pattern
+      function stormNoise(x, y, t) {
+        let value = 0;
+        let amplitude = 1;
+        let frequency = 1;
+        let norm = 0;
+
+        for (let octave = 0; octave < 3; octave++) {
+          value +=
+            amplitude *
+            Math.sin((x * 0.03 * frequency + t * 1.3 * frequency)) *
+            Math.cos((y * 0.04 * frequency - t * 1.7 * frequency));
+          norm += amplitude;
+          amplitude *= 0.5;
+          frequency *= 2;
+        }
+
+        return value / norm; // roughly -1..1
+      }
+
+      const SHAPE_KEYS = ["semi-circle", "low", "surge", "flat", "barrel"];
+      const shapeImages = {};
+      let currentShape = "barrel";
+
+      function visibleShapeKeys() {
+        const keys = [];
+        document.querySelectorAll(".shape-btn:not(.shape-hidden)").forEach((b) => {
+          const s = b.dataset.shape;
+          if (s && SHAPE_KEYS.includes(s)) keys.push(s);
+        });
+        return keys.length ? keys : SHAPE_KEYS;
+      }
+
+      SHAPE_KEYS.forEach((key) => {
+        const img = new Image();
+        img.src = `./assets/${key}.svg`;
+        shapeImages[key] = img;
+      });
+
+      function isShapeReady(img) {
+        return img && img.complete && img.naturalWidth && img.naturalHeight;
+      }
+
+      function resizeCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function wrapParagraphToLines(words, maxChars) {
+        const lines = [];
+        let currentLine = "";
+        for (const word of words) {
+          if (!word) continue;
+          const wouldBe = currentLine ? currentLine + " " + word : word;
+          if (currentLine.length === 0) {
+            currentLine = word;
+          } else if (wouldBe.length <= maxChars) {
+            currentLine = wouldBe;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
+      }
+
+      function wrapTextToLines(text, maxChars) {
+        if (!text) return [];
+        const clean = text.trim();
+        if (!clean) return [];
+
+        const paragraphs = clean.split(/\n/);
+        const lines = [];
+        for (const para of paragraphs) {
+          const words = para.trim().split(/\s+/).filter(Boolean);
+          if (words.length === 0) {
+            lines.push("");
+            continue;
+          }
+          lines.push(...wrapParagraphToLines(words, maxChars));
+        }
+        return lines;
+      }
+
+      function fontCssForCanvas(sizePx) {
+        if (userFontFace) {
+          return `bold ${sizePx}px "${USER_FONT_FAMILY}", ${CANVAS_FONT_FALLBACK}`;
+        }
+        return `bold ${sizePx}px ${CANVAS_FONT_FALLBACK}`;
+      }
+
+      function clearUserFont() {
+        if (userFontFace) {
+          try {
+            document.fonts.delete(userFontFace);
+          } catch (_) {}
+          userFontFace = null;
+        }
+        if (input) {
+          input.style.fontFamily = "";
+          input.style.fontWeight = "";
+        }
+        if (clearFontBtn) clearFontBtn.hidden = true;
+        if (fontStatusHint) fontStatusHint.textContent = "";
+      }
+
+      function loadUserFontFromFile(file) {
+        if (!file || !file.size) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const buf = reader.result;
+          (async () => {
+            try {
+              clearUserFont();
+              const face = new FontFace(USER_FONT_FAMILY, buf);
+              await face.load();
+              document.fonts.add(face);
+              userFontFace = face;
+              await document.fonts.ready;
+              const shortName = file.name.replace(/\.[^.]+$/, "").slice(0, 28) || "Custom";
+              if (fontStatusHint) fontStatusHint.textContent = shortName;
+              if (clearFontBtn) clearFontBtn.hidden = false;
+              if (input) {
+                input.style.fontFamily = `"${USER_FONT_FAMILY}", ${CANVAS_FONT_FALLBACK}`;
+                input.style.fontWeight = "700";
+              }
+              updateFromControls();
+              render(accumulatedTime);
+            } catch (err) {
+              console.error(err);
+              if (fontStatusHint) fontStatusHint.textContent = "Could not load font";
+              clearUserFont();
+            }
+          })();
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      function createTextMaskCanvas(text, width, height) {
+        const offCanvas = document.createElement("canvas");
+        offCanvas.width = width;
+        offCanvas.height = height;
+        const offCtx = offCanvas.getContext("2d");
+
+        offCtx.clearRect(0, 0, width, height);
+
+        if (!text) {
+          return offCanvas;
+        }
+
+        const lines = wrapTextToLines(text, 7);
+        if (!lines.length) return offCanvas;
+
+        const leadingRatio = textLineSpacing / 100;
+        const getLineHeight = (fs) => fs * leadingRatio;
+
+        const scaleFraction = textScale / 10;
+        const maxHeight = height * 0.85 * scaleFraction;
+        const maxWidth = width * 0.9 * scaleFraction;
+        let fontSize = height * 0.85;
+        offCtx.textAlign = "left";
+        offCtx.textBaseline = "alphabetic";
+
+        const lsEm = letterSpacingPct / 100;
+        const applyLetterSpacing = () => {
+          offCtx.letterSpacing = lsEm === 0 ? "0px" : `${lsEm}em`;
+        };
+
+        const measureLineWidth = (line) => {
+          const m = offCtx.measureText(line);
+          let w = m.width;
+          if (lsEm !== 0 && line.length > 0) {
+            const trailingSpace = Math.abs(lsEm) * fontSize;
+            w = Math.max(0, w - trailingSpace);
+          }
+          return w;
+        };
+
+        while (fontSize > 10) {
+          offCtx.font = fontCssForCanvas(fontSize);
+          applyLetterSpacing();
+
+          let maxLineWidth = 0;
+          for (const line of lines) {
+            maxLineWidth = Math.max(maxLineWidth, measureLineWidth(line));
+          }
+
+          const lineHeight = getLineHeight(fontSize);
+          const totalTextHeight = (lines.length - 1) * lineHeight + fontSize;
+
+          if (maxLineWidth <= maxWidth && totalTextHeight <= maxHeight) {
+            break;
+          }
+          fontSize -= 2;
+        }
+
+        const lineHeight = getLineHeight(fontSize);
+
+        offCtx.font = fontCssForCanvas(fontSize);
+        applyLetterSpacing();
+
+        const metrics = offCtx.measureText("Hg");
+        const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.75;
+        const descent = metrics.actualBoundingBoxDescent || fontSize * 0.25;
+        const glyphHeight = ascent + descent;
+
+        const totalTextHeight = (lines.length - 1) * lineHeight + glyphHeight;
+        const startBaseline = height / 2 - totalTextHeight / 2 + ascent;
+
+        offCtx.fillStyle = "white";
+        lines.forEach((line, index) => {
+          const lw = measureLineWidth(line);
+          const lx = (width - lw) / 2;
+          offCtx.fillText(line, lx, startBaseline + index * lineHeight);
+        });
+        return offCanvas;
+      }
+
+      // Draw a fallback semicircle shape that matches the reference screenshots
+      function drawFallbackShape(context, x, y, size) {
+        const radius = size / 2;
+        const cx = x + radius;
+        const cy = y + radius;
+        context.fillStyle = "white";
+        context.beginPath();
+        context.arc(cx, cy, radius, Math.PI, 0, false);
+        context.closePath();
+        context.fill();
+      }
+
+      function updateBgImageData(canvasW, canvasH) {
+        if (!bgImage) { bgImageData = null; return; }
+        bgImageCanvas.width = canvasW;
+        bgImageCanvas.height = canvasH;
+        bgImageCtx.fillStyle = "#000";
+        bgImageCtx.fillRect(0, 0, canvasW, canvasH);
+        const iw = bgImage.naturalWidth;
+        const ih = bgImage.naturalHeight;
+        if (!iw || !ih) {
+          bgImageData = null;
+          bgImageW = canvasW;
+          bgImageH = canvasH;
+          return;
+        }
+        /* contain: entire image visible inside viewport (letterboxed), never cropped */
+        const scale = Math.min(canvasW / iw, canvasH / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        const dx = (canvasW - dw) / 2;
+        const dy = (canvasH - dh) / 2;
+        bgImageCtx.drawImage(bgImage, dx, dy, dw, dh);
+
+        const frame = bgImageCtx.getImageData(0, 0, canvasW, canvasH);
+        const d = frame.data;
+        const contrastFactor = (259 * (imgContrast + 255)) / (255 * (259 - imgContrast));
+        const invertLum = invertImageCheck && invertImageCheck.checked;
+        const lum = new Float32Array(canvasW * canvasH);
+        for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+          let r = d[i], g = d[i + 1], b = d[i + 2];
+          r = Math.min(255, Math.max(0, contrastFactor * (r - 128) + 128 + imgBrightness));
+          g = Math.min(255, Math.max(0, contrastFactor * (g - 128) + 128 + imgBrightness));
+          b = Math.min(255, Math.max(0, contrastFactor * (b - 128) + 128 + imgBrightness));
+          let l = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+          if (invertLum) l = 1 - l;
+          lum[p] = l;
+        }
+        bgImageData = lum;
+        bgImageW = canvasW;
+        bgImageH = canvasH;
+      }
+
+      function getAudioEnergy() {
+        if (!audioAnalyser || !audioFreqData) return 0;
+        audioAnalyser.getByteFrequencyData(audioFreqData);
+        const len = audioFreqData.length;
+        let start = 0, end = len;
+        if (audioBand === "bass") { start = 0; end = Math.floor(len * 0.15); }
+        else if (audioBand === "mid") { start = Math.floor(len * 0.15); end = Math.floor(len * 0.55); }
+        else if (audioBand === "high") { start = Math.floor(len * 0.55); end = len; }
+        if (end <= start) return 0;
+        let sum = 0;
+        for (let i = start; i < end; i++) sum += audioFreqData[i];
+        return (sum / ((end - start) * 255));
+      }
+
+      function updateAudioSpectrum() {
+        if (!audioAnalyser || !audioFreqData) { audioSpectrumSmooth = null; return; }
+        audioAnalyser.getByteFrequencyData(audioFreqData);
+        const len = audioFreqData.length;
+        if (!audioSpectrumSmooth || audioSpectrumSmooth.length !== len) {
+          audioSpectrumSmooth = new Float32Array(len);
+        }
+        const rise = 0.35;
+        const fall = 0.08;
+        for (let i = 0; i < len; i++) {
+          const target = audioFreqData[i] / 255;
+          const rate = target > audioSpectrumSmooth[i] ? rise : fall;
+          audioSpectrumSmooth[i] += (target - audioSpectrumSmooth[i]) * rate;
+        }
+      }
+
+      function getSpectrumAt(ratio) {
+        if (!audioSpectrumSmooth) return 0;
+        const len = audioSpectrumSmooth.length;
+        let start = 0, end = len;
+        if (audioBand === "bass") { start = 0; end = Math.floor(len * 0.15); }
+        else if (audioBand === "mid") { start = Math.floor(len * 0.15); end = Math.floor(len * 0.55); }
+        else if (audioBand === "high") { start = Math.floor(len * 0.55); end = len; }
+        if (end <= start) return 0;
+        const idx = start + ratio * (end - start - 1);
+        const lo = Math.floor(idx);
+        const hi = Math.min(lo + 1, end - 1);
+        const frac = idx - lo;
+        return audioSpectrumSmooth[lo] * (1 - frac) + audioSpectrumSmooth[hi] * frac;
+      }
+
+      let accumulatedTime = 0;
+      let lastFrameTimestamp = 0;
+      let isPaused = false;
+
+      async function toggleWebcam() {
+        if (webcamActive) {
+          if (webcamStream) {
+            webcamStream.getTracks().forEach((track) => track.stop());
+          }
+          webcamStream = null;
+          webcamActive = false;
+          webcamData = null;
+          webcamMotion = null;
+          prevWebcamData = null;
+          handPathBuffer = null;
+          handPathSmooth = null;
+          webcamBtn.textContent = "Webcam";
+          fullGrid = fullGridBeforeWebcam;
+          fullGridBtn.classList.toggle("toggle-on", fullGrid);
+          motionPattern = motionPatternBeforeWebcam;
+          setMotionActive(motionPattern);
+          render(accumulatedTime);
+          return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert("Webcam not supported in this browser.");
+          return;
+        }
+        if (!window.isSecureContext) {
+          alert("Webcam requires a secure page (HTTPS or localhost). Run a local server (e.g. npx serve .) and open the pattern tool page.");
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+            },
+            audio: false,
+          });
+          webcamStream = stream;
+          webcamVideo.srcObject = stream;
+          await webcamVideo.play();
+          webcamActive = true;
+          webcamBtn.textContent = "Webcam On";
+          motionPatternBeforeWebcam = motionPattern;
+          fullGridBeforeWebcam = fullGrid;
+          motionPattern = "none";
+          setMotionActive("none");
+          fullGrid = true;
+          fullGridBtn.classList.add("toggle-on");
+          render(accumulatedTime);
+        } catch (e) {
+          const msg = e.name === "NotAllowedError" || e.name === "PermissionDeniedError"
+            ? "Camera permission denied. Allow camera access and try again."
+            : e.name === "NotFoundError"
+            ? "No camera found."
+            : "Could not access camera: " + (e.message || e.name);
+          alert(msg);
+        }
+      }
+
+      function render(time = 0) {
+        const t = time * tideSpeed;
+
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const w2 = width >> 1;
+        const h2 = height >> 1;
+
+        if (width === 0 || height === 0) return;
+
+        if (bgImage && (bgImageW !== width || bgImageH !== height)) {
+          updateBgImageData(width, height);
+        }
+
+        audioEnergy = getAudioEnergy();
+        const smoothRate = 0.12;
+        audioTideSmooth += (audioEnergy - audioTideSmooth) * smoothRate;
+        const audioTideY = (audioVisMode === "tide" && audioEnergy > 0)
+          ? height - audioTideSmooth * audioAmplitude * height
+          : -1;
+
+        if (audioVisMode === "waveform") updateAudioSpectrum();
+
+        ctx.clearRect(0, 0, width, height);
+        if (!transparentBackground) {
+          ctx.fillStyle = "black";
+          ctx.fillRect(0, 0, width, height);
+        }
+
+        if (webcamActive && webcamVideo.readyState >= 2) {
+          webcamCanvas.width = w2;
+          webcamCanvas.height = h2;
+
+          const vw = webcamVideo.videoWidth || 1;
+          const vh = webcamVideo.videoHeight || 1;
+          const scale = Math.max(w2 / vw, h2 / vh);
+          const dw = vw * scale;
+          const dh = vh * scale;
+          const dx = (w2 - dw) / 2;
+          const dy = (h2 - dh) / 2;
+
+          webcamCtx.save();
+          webcamCtx.translate(w2, 0);
+          webcamCtx.scale(-1, 1);
+          webcamCtx.fillStyle = "black";
+          webcamCtx.fillRect(0, 0, w2, h2);
+          webcamCtx.drawImage(webcamVideo, 0, 0, vw, vh, dx, dy, dw, dh);
+          webcamCtx.restore();
+
+          const frame = webcamCtx.getImageData(0, 0, w2, h2);
+          const data = frame.data;
+          const pixelCount = w2 * h2;
+
+          if (prevWebcamData && prevWebcamData.length === data.length) {
+            if (!webcamMotion || webcamMotion.length !== pixelCount) {
+              webcamMotion = new Uint8ClampedArray(pixelCount);
+            }
+            for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+              const prevL = (prevWebcamData[i] + prevWebcamData[i + 1] + prevWebcamData[i + 2]) / 3;
+              const curL = (data[i] + data[i + 1] + data[i + 2]) / 3;
+              webcamMotion[p] = Math.min(255, Math.abs(curL - prevL) * 2);
+            }
+          } else {
+            webcamMotion = null;
+          }
+
+          prevWebcamData = new Uint8ClampedArray(data);
+          webcamData = data;
+
+          if (!handPathBuffer || handPathBuffer.length !== pixelCount) {
+            handPathBuffer = new Float32Array(pixelCount);
+          }
+          for (let p = 0; p < pixelCount; p++) {
+            const motionNorm = webcamMotion ? webcamMotion[p] / 255 : 0;
+            handPathBuffer[p] = Math.min(HAND_PATH_MAX, handPathBuffer[p] * HAND_PATH_DECAY + motionNorm * HAND_PATH_ADD);
+          }
+          if (!handPathSmooth || handPathSmooth.length !== pixelCount) {
+            handPathSmooth = new Float32Array(pixelCount);
+          }
+          const smoothAlpha = HAND_PATH_SMOOTH;
+          for (let p = 0; p < pixelCount; p++) {
+            handPathSmooth[p] = handPathSmooth[p] * (1 - smoothAlpha) + handPathBuffer[p] * smoothAlpha;
+          }
+        }
+
+        const panelOpen = !controlsPanel.classList.contains("collapsed");
+        const panelW = panelOpen ? controlsPanel.getBoundingClientRect().width : 0;
+        const visibleWidth = width - panelW;
+
+        const cosA = Math.cos(angleRad);
+        const sinA = Math.sin(angleRad);
+
+        const cellWidth = tileSize + gapX;
+        const cellHeight = tileSize + gapY;
+
+        const shapeImg = shapeImages[currentShape];
+        const hasAudio = !!(audioAnalyser && audioFreqData);
+        let drawWidth = tileSize;
+        let drawHeight = tileSize;
+        if (shapeImg && isShapeReady(shapeImg)) {
+          const aspect = shapeImg.naturalWidth / shapeImg.naturalHeight;
+          if (aspect >= 1) { drawWidth = tileSize; drawHeight = tileSize / aspect; }
+          else { drawHeight = tileSize; drawWidth = tileSize * aspect; }
+        }
+
+        const drawCell = (x, y, time) => {
+          const sampleX = Math.round(x + cellWidth / 2);
+          const sampleY = Math.round(y + cellHeight / 2);
+          if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) return;
+
+          const pIdxLo = webcamData ? (Math.min(sampleY >> 1, h2 - 1) * w2 + Math.min(sampleX >> 1, w2 - 1)) | 0 : 0;
+
+          let brightness = 1;
+          if (webcamActive && webcamData) {
+            const o = pIdxLo * 4;
+            brightness = (webcamData[o] + webcamData[o + 1] + webcamData[o + 2]) / (3 * 255);
+            if (brightness < 0.05) return;
+          } else if (bgImageData && bgImageW === width && bgImageH === height) {
+            const px = Math.min(sampleX, width - 1);
+            const py = Math.min(sampleY, height - 1);
+            brightness = bgImageData[py * width + px];
+            if (brightness < 0.02) return;
+          }
+
+          let shimmerBoost = 0;
+          if (webcamActive && webcamMotion) {
+            const motionNorm = (webcamMotion[pIdxLo] || 0) / 255;
+            if (motionNorm > 0.1) {
+              shimmerBoost = 0.2 * motionNorm * (0.5 + 0.5 * Math.sin(time * 8 + x * 0.1 + y * 0.13));
+            }
+          }
+
+          const rx = x * cosA - y * sinA;
+          const ry = x * sinA + y * cosA;
+
+          let phase;
+          let motionYOffset = 0;
+          let motionXOffset = 0;
+          switch (motionPattern) {
+            case "crest":
+              phase = t * 0.6 + ry * 0.05 * waveFrequency;
+              break;
+            case "ebb": {
+              // crest-like, but time eases to a stop halfway then reverses (ping-pong)
+              const spatial = ry * 0.05 * waveFrequency;
+              const speed = 0.12; // slightly faster ebb
+              const tNorm = (t * speed) % 1; // 0..1
+              const tri = tNorm < 0.5 ? tNorm * 2 : (1 - tNorm) * 2; // 0->1->0
+              const eased = tri * tri * (3 - 2 * tri); // smoothstep over triangle
+              phase = eased * (Math.PI * 2) + spatial; // full cycle, eased ping-pong
+              motionXOffset = 0;
+              motionYOffset = 0;
+              break;
+            }
+            case "flow":
+              phase = t * 0.6 + (y - height / 2) * 0.05 * waveFrequency;
+              motionYOffset = Math.sin(phase) * tileSize * 0.6;
+              break;
+            case "storm": { const n = stormNoise(rx * waveFrequency, ry * waveFrequency, t * 0.35); phase = n * Math.PI * 2; break; }
+            case "surge": phase = t * 0.8 + Math.sin(rx * 0.06 * waveFrequency) * 0.8 + Math.cos(ry * 0.06 * waveFrequency) * 0.8; break;
+            case "none": phase = 0; break;
+            case "swell": default: phase = t * 0.9 + (rx * 0.03 + ry * 0.05) * waveFrequency; break;
+          }
+
+          let scaleBase = 0.5 + 0.5 * Math.sin(phase);
+          if (motionPattern === "none" && !hasAudio) {
+            scaleBase = 1;
+          } else if (motionPattern === "ebb") {
+            const u = (Math.sin(phase) + 1) * 0.5;
+            const eased = u * u * (3 - 2 * u);
+            scaleBase = 0.4 + eased * 0.9;
+          }
+          let scale = scaleBase;
+          scale *= 0.3 + 0.7 * brightness;
+          scale *= 1 + shimmerBoost;
+          if (audioVisMode === "waveform" && audioSpectrumSmooth) {
+            const colRatio = Math.min(1, Math.max(0, (x + cellWidth / 2) / visibleWidth));
+            const specVal = getSpectrumAt(colRatio);
+            const waveHeight = specVal * audioAmplitude * height;
+            const cellCenterY = y + cellHeight / 2;
+            const cellFromBottom = height - cellCenterY;
+            if (cellFromBottom < waveHeight) {
+              const depth = 1 - cellFromBottom / Math.max(1, waveHeight);
+              scale *= 1 + depth * 4;
+            }
+          } else if (audioTideY >= 0) {
+            const cellCenterY = y + cellHeight / 2;
+            const dist = Math.abs(cellCenterY - audioTideY);
+            const reach = height * 0.4;
+            const proximity = Math.max(0, 1 - dist / reach);
+            scale *= 1 + proximity * proximity * 4;
+          }
+
+          let pathStrength = 0;
+          if (handPathSmooth && webcamActive) pathStrength = handPathSmooth[pIdxLo] || 0;
+          const displace = pathStrength * HAND_DISPLACE;
+          const angle = Math.atan2(sampleY - height / 2, sampleX - width / 2) + time * 0.3;
+          const dispX = displace * Math.cos(angle) * 0.6;
+          const dispY = -displace * 0.9 + Math.sin(sampleX * 0.02) * displace * 0.3;
+          scale *= 1 + pathStrength * HAND_SCALE_BOOST;
+          scale = Math.min(scale, 1.0);
+
+          const baseX = x + (cellWidth - drawWidth) / 2;
+          const baseY = y + cellHeight;
+          const gx = Math.floor((x - gapX) / cellWidth);
+          const gy = Math.floor((y - gapY) / cellHeight);
+          const isFlipped = alternateShapes && ((gx + gy) % 2 === 1);
+
+          let anchorX = baseX + drawWidth / 2 + dispX + motionXOffset;
+          let anchorY = baseY + dispY + motionYOffset;
+
+          ctx.save();
+          ctx.translate(anchorX, anchorY);
+          ctx.scale(scale, isFlipped ? -scale : scale);
+          const localX = -drawWidth / 2;
+          const localY = -drawHeight;
+          if (shapeImg && isShapeReady(shapeImg)) {
+            ctx.drawImage(shapeImg, localX, localY, drawWidth, drawHeight);
+          } else {
+            drawFallbackShape(ctx, localX, localY, tileSize);
+          }
+          ctx.restore();
+        };
+
+        if (fullGrid) {
+          for (let y = gapY; y < height - gapY; y += cellHeight) {
+            for (let x = gapX; x < width - gapX; x += cellWidth) {
+              drawCell(x, y, time);
+            }
+          }
+        } else {
+          const text = input.value.trim() || "A";
+          const maskCanvas = createTextMaskCanvas(text, width, height);
+          const maskCtx = maskCanvas.getContext("2d");
+          const maskData = maskCtx.getImageData(0, 0, width, height).data;
+
+          for (let y = gapY; y < height - gapY; y += cellHeight) {
+            for (let x = gapX; x < width - gapX; x += cellWidth) {
+              const sampleX = Math.round(x + cellWidth / 2);
+              const sampleY = Math.round(y + cellHeight / 2);
+              if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) continue;
+              const idx = (sampleY * width + sampleX) * 4;
+              if (maskData[idx + 3] <= 16) continue;
+              drawCell(x, y, time);
+            }
+          }
+        }
+      }
+
+      function updateSliderThumb(inputEl, valueEl) {
+        const min = Number(inputEl.min);
+        const max = Number(inputEl.max);
+        const val = Number(inputEl.value);
+        const row = inputEl.parentElement;
+        const rowWidth = row.clientWidth;
+        const thumbWidth = 40;
+
+        if (!rowWidth) return;
+
+        const ratio = max > min ? (val - min) / (max - min) : 0;
+        const clamped = Math.min(1, Math.max(0, ratio));
+        const available = rowWidth - thumbWidth;
+        const offset = available * clamped;
+
+        valueEl.style.left = `${offset}px`;
+      }
+
+      function attachSmoothSlider(inputEl, valueEl) {
+        let isDragging = false;
+        const row = inputEl.parentElement;
+
+        const applyPointerPosition = (clientX) => {
+          const rect = row.getBoundingClientRect();
+          const min = Number(inputEl.min);
+          const max = Number(inputEl.max);
+          const step = Number(inputEl.step) || 1;
+
+          if (!rect.width || max <= min) return;
+
+          const ratio = (clientX - rect.left) / rect.width;
+          const clamped = Math.min(1, Math.max(0, ratio));
+          const rawValue = min + clamped * (max - min);
+          const stepped =
+            Math.round((rawValue - min) / step) * step + min;
+
+          inputEl.value = String(
+            Math.min(max, Math.max(min, stepped))
+          );
+          inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        };
+
+        const isInsideRow = (clientX, clientY) => {
+          const rect = row.getBoundingClientRect();
+          return clientX >= rect.left && clientX <= rect.right &&
+                 clientY >= rect.top && clientY <= rect.bottom;
+        };
+
+        const stopDrag = () => {
+          if (!isDragging) return;
+          isDragging = false;
+          document.removeEventListener("pointermove", onDocMove);
+          document.removeEventListener("pointerup", onDocUp);
+        };
+
+        const onDocMove = (e) => {
+          if (!isDragging) return;
+          if (!isInsideRow(e.clientX, e.clientY)) {
+            stopDrag();
+            return;
+          }
+          e.preventDefault();
+          applyPointerPosition(e.clientX);
+        };
+
+        const onDocUp = () => stopDrag();
+
+        row.addEventListener("pointerdown", (e) => {
+          isDragging = true;
+          e.preventDefault();
+          applyPointerPosition(e.clientX);
+          document.addEventListener("pointermove", onDocMove);
+          document.addEventListener("pointerup", onDocUp);
+        });
+      }
+
+      function updateFromControls() {
+        gapX = gapY = Number(spacingSlider.value);
+        tileSize = Number(sizeSlider.value);
+        tideSpeed = Number(speedSlider.value) / 100 || 0;
+        waveFrequency = Number(frequencySlider.value) / 100 || 0.01;
+        angleDeg = Number(angleSlider.value) || 0;
+        angleRad = (angleDeg * Math.PI) / 180;
+        textScale = Number(textSizeSlider.value) || 1;
+        textLineSpacing = Number(textLineSpacingSlider.value) || 80;
+        letterSpacingPct = Number(letterSpacingSlider.value);
+        if (Number.isNaN(letterSpacingPct)) letterSpacingPct = 0;
+        alternateShapes = !!(alternateShapesCheck && alternateShapesCheck.checked);
+        spacingValue.textContent = `${gapX}px`;
+        sizeValue.textContent = String(tileSize);
+        speedValue.textContent = tideSpeed.toFixed(2);
+        frequencyValue.textContent = waveFrequency.toFixed(2);
+        angleValue.textContent = `${angleDeg}°`;
+        textSizeValue.textContent = `${textScale}x`;
+        textLineSpacingValue.textContent = `${textLineSpacing}%`;
+        letterSpacingValue.textContent =
+          letterSpacingPct === 0 ? "0" : `${(letterSpacingPct / 100).toFixed(2)}em`;
+        if (input) {
+          input.style.letterSpacing =
+            letterSpacingPct === 0 ? "" : `${letterSpacingPct / 100}em`;
+        }
+
+        updateSliderThumb(spacingSlider, spacingValue);
+        updateSliderThumb(sizeSlider, sizeValue);
+        updateSliderThumb(speedSlider, speedValue);
+        updateSliderThumb(frequencySlider, frequencyValue);
+        updateSliderThumb(angleSlider, angleValue);
+        updateSliderThumb(textSizeSlider, textSizeValue);
+        updateSliderThumb(textLineSpacingSlider, textLineSpacingValue);
+        updateSliderThumb(letterSpacingSlider, letterSpacingValue);
+      }
+
+      function animate(timestamp) {
+        const seconds = timestamp / 1000;
+
+        if (!lastFrameTimestamp) {
+          lastFrameTimestamp = seconds;
+        }
+
+        const delta = seconds - lastFrameTimestamp;
+        lastFrameTimestamp = seconds;
+
+        if (!isPaused) {
+          accumulatedTime += delta;
+        }
+
+        render(accumulatedTime);
+        requestAnimationFrame(animate);
+      }
+
+      // Event wiring
+      input.addEventListener("input", () => {
+        render(accumulatedTime);
+      });
+
+      // Cmd+A / Ctrl+A: select all in text input (for select-all-then-delete workflow)
+      // Capture phase + preventDefault so Cursor/VS Code Simple Browser doesn't intercept
+      document.addEventListener("keydown", (e) => {
+        const isSelectAll = (e.metaKey || e.ctrlKey) && (e.key === "a" || e.key === "A" || e.keyCode === 65);
+        if (isSelectAll && e.target === input) {
+          e.preventDefault();
+          e.stopPropagation();
+          input.select();
+        }
+      }, true);
+
+      // Triple-click: select all (works when Cmd+A is captured by host, e.g. Cursor browser)
+      input.addEventListener("click", (e) => {
+        if (e.detail === 3) {
+          e.preventDefault();
+          input.select();
+        }
+      });
+
+      if (uploadFontBtn && fontFileInput) {
+        uploadFontBtn.addEventListener("click", () => fontFileInput.click());
+        fontFileInput.addEventListener("change", () => {
+          const file = fontFileInput.files && fontFileInput.files[0];
+          if (file) loadUserFontFromFile(file);
+          fontFileInput.value = "";
+        });
+      }
+      if (clearFontBtn) {
+        clearFontBtn.addEventListener("click", () => {
+          clearUserFont();
+          render(accumulatedTime);
+        });
+      }
+
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        bgImageW = 0;
+        bgImageH = 0;
+        updateToggleButton();
+        render(accumulatedTime);
+      });
+
+      spacingSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      sizeSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      speedSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      textSizeSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      textLineSpacingSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      letterSpacingSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      if (alternateShapesCheck) {
+        alternateShapesCheck.addEventListener("change", () => {
+          updateFromControls();
+          render(accumulatedTime);
+        });
+      }
+
+      if (transparentBgCheck) {
+        transparentBgCheck.addEventListener("change", () => {
+          transparentBackground = !!transparentBgCheck.checked;
+          render(accumulatedTime);
+        });
+      }
+
+      function setMotionActive(value) {
+        motionBtns.forEach((btn) => {
+          btn.classList.toggle("toggle-on", btn.dataset.motion === value);
+        });
+      }
+
+      motionBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          motionPattern = btn.dataset.motion;
+          setMotionActive(motionPattern);
+          if (motionPattern === "none") {
+            spacingSlider.value = "0";
+            updateFromControls();
+          }
+          render(accumulatedTime);
+        });
+      });
+
+      const shapeBtns = document.querySelectorAll(".shape-btn");
+      shapeBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const shape = btn.dataset.shape;
+          if (!shape || !SHAPE_KEYS.includes(shape)) return;
+          currentShape = shape;
+          shapeBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.shape === currentShape));
+          render(accumulatedTime);
+        });
+      });
+
+      let uploadCounter = 0;
+
+      uploadSvgBtn.addEventListener("click", () => svgFileInput.click());
+
+      svgFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const svgData = ev.target.result;
+          const key = `custom-${++uploadCounter}`;
+          const name = file.name.replace(/\.svg$/i, "").slice(0, 12);
+
+          const img = new Image();
+          img.src = svgData;
+          img.onload = () => {
+            SHAPE_KEYS.push(key);
+            shapeImages[key] = img;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "shape-btn";
+            btn.dataset.shape = key;
+            btn.title = name;
+
+            const preview = document.createElement("img");
+            preview.src = svgData;
+            preview.alt = name;
+            btn.appendChild(preview);
+
+            btn.addEventListener("click", () => {
+              currentShape = key;
+              document.querySelectorAll(".shape-btn").forEach((b) =>
+                b.classList.toggle("toggle-on", b.dataset.shape === currentShape)
+              );
+              render(accumulatedTime);
+            });
+
+            shapeButtonsContainer.appendChild(btn);
+
+            currentShape = key;
+            document.querySelectorAll(".shape-btn").forEach((b) =>
+              b.classList.toggle("toggle-on", b.dataset.shape === currentShape)
+            );
+            render(accumulatedTime);
+          };
+        };
+        reader.readAsDataURL(file);
+        svgFileInput.value = "";
+      });
+
+      uploadImageBtn.addEventListener("click", () => imageFileInput.click());
+
+      imageFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            bgImage = img;
+            imgBrightness = 0;
+            imgBrightnessSlider.value = "0";
+            imgBrightnessValue.textContent = "0";
+            updateSliderThumb(imgBrightnessSlider, imgBrightnessValue);
+            imgContrast = 100 * 2.55;
+            imgContrastSlider.value = "100";
+            imgContrastValue.textContent = "100";
+            updateSliderThumb(imgContrastSlider, imgContrastValue);
+            fullGrid = true;
+            fullGridBtn.classList.add("toggle-on");
+            motionPattern = "none";
+            setMotionActive("none");
+            const rect = canvas.getBoundingClientRect();
+            updateBgImageData(rect.width, rect.height);
+            imageControlsEl.style.display = "";
+            clearImageBtn.style.display = "";
+            render(accumulatedTime);
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+        imageFileInput.value = "";
+      });
+
+      clearImageBtn.addEventListener("click", () => {
+        bgImage = null;
+        bgImageData = null;
+        bgImageW = 0;
+        bgImageH = 0;
+        imageControlsEl.style.display = "none";
+        clearImageBtn.style.display = "none";
+        render(accumulatedTime);
+      });
+
+      imgBrightnessSlider.addEventListener("input", () => {
+        imgBrightness = Number(imgBrightnessSlider.value) * 2.55;
+        imgBrightnessValue.textContent = imgBrightnessSlider.value;
+        updateSliderThumb(imgBrightnessSlider, imgBrightnessValue);
+        if (bgImage) {
+          updateBgImageData(canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+          render(accumulatedTime);
+        }
+      });
+
+      imgContrastSlider.addEventListener("input", () => {
+        imgContrast = Number(imgContrastSlider.value) * 2.55;
+        imgContrastValue.textContent = imgContrastSlider.value;
+        updateSliderThumb(imgContrastSlider, imgContrastValue);
+        if (bgImage) {
+          updateBgImageData(canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+          render(accumulatedTime);
+        }
+      });
+
+      if (invertImageCheck) {
+        invertImageCheck.addEventListener("change", () => {
+          if (bgImage) {
+            updateBgImageData(canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+            render(accumulatedTime);
+          }
+        });
+      }
+
+      uploadAudioBtn.addEventListener("click", () => audioFileInput.click());
+
+      audioFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (audioElement) {
+          audioElement.pause();
+          audioElement.remove();
+        }
+        if (audioSource) {
+          try { audioSource.disconnect(); } catch (_) {}
+          audioSource = null;
+        }
+
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        audioElement = new Audio();
+        audioElement.src = URL.createObjectURL(file);
+        audioElement.loop = audioLooping;
+        audioElement.crossOrigin = "anonymous";
+
+        audioSource = audioCtx.createMediaElementSource(audioElement);
+        audioAnalyser = audioCtx.createAnalyser();
+        audioAnalyser.fftSize = 512;
+        audioAnalyser.smoothingTimeConstant = Number(audioSmoothingSlider.value) / 100;
+        audioFreqData = new Uint8Array(audioAnalyser.frequencyBinCount);
+
+        audioGain = audioCtx.createGain();
+        audioGain.gain.value = Number(audioVolumeSlider.value) / 100;
+
+        audioSource.connect(audioAnalyser);
+        audioAnalyser.connect(audioGain);
+        audioGain.connect(audioCtx.destination);
+
+        audioControlsEl.style.display = "";
+        clearAudioBtn.style.display = "";
+
+        fullGrid = true;
+        fullGridBtn.classList.add("toggle-on");
+
+        motionPattern = "none";
+        setMotionActive("none");
+
+        audioVisMode = "waveform";
+        audioSpectrumSmooth = null;
+        audioVisBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.vis === "waveform"));
+
+        audioVolumeSlider.value = "50";
+        audioVolumeValue.textContent = "50";
+        if (audioGain) audioGain.gain.value = 0.5;
+        updateSliderThumb(audioVolumeSlider, audioVolumeValue);
+
+        audioAmplitude = 2.0;
+        audioAmpSlider.value = "200";
+        audioAmpValue.textContent = "200";
+        updateSliderThumb(audioAmpSlider, audioAmpValue);
+
+        audioSmoothingSlider.value = "85";
+        audioSmoothingValue.textContent = "85";
+        if (audioAnalyser) audioAnalyser.smoothingTimeConstant = 0.85;
+        updateSliderThumb(audioSmoothingSlider, audioSmoothingValue);
+
+        audioBand = "all";
+        audioBandBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.band === "all"));
+
+        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+        audioElement.play();
+        audioPlayBtn.textContent = "Pause";
+
+        audioFileInput.value = "";
+      });
+
+      clearAudioBtn.addEventListener("click", () => {
+        if (audioElement) { audioElement.pause(); audioElement.remove(); audioElement = null; }
+        if (audioSource) { try { audioSource.disconnect(); } catch (_) {} audioSource = null; }
+        audioAnalyser = null;
+        audioGain = null;
+        audioFreqData = null;
+        audioEnergy = 0;
+        audioTideSmooth = 0;
+        audioSpectrumSmooth = null;
+        audioControlsEl.style.display = "none";
+        clearAudioBtn.style.display = "none";
+        render(accumulatedTime);
+      });
+
+      audioPlayBtn.addEventListener("click", () => {
+        if (!audioElement) return;
+        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+        if (audioElement.paused) {
+          audioElement.play();
+          audioPlayBtn.textContent = "Pause";
+        } else {
+          audioElement.pause();
+          audioPlayBtn.textContent = "Play";
+        }
+      });
+
+      audioLoopBtn.addEventListener("click", () => {
+        audioLooping = !audioLooping;
+        audioLoopBtn.classList.toggle("toggle-on", audioLooping);
+        if (audioElement) audioElement.loop = audioLooping;
+      });
+
+      audioVolumeSlider.addEventListener("input", () => {
+        const v = Number(audioVolumeSlider.value);
+        audioVolumeValue.textContent = String(v);
+        updateSliderThumb(audioVolumeSlider, audioVolumeValue);
+        if (audioGain) audioGain.gain.value = v / 100;
+      });
+
+      audioAmpSlider.addEventListener("input", () => {
+        audioAmplitude = Number(audioAmpSlider.value) / 100;
+        audioAmpValue.textContent = audioAmpSlider.value;
+        updateSliderThumb(audioAmpSlider, audioAmpValue);
+      });
+
+      audioSmoothingSlider.addEventListener("input", () => {
+        const v = Number(audioSmoothingSlider.value) / 100;
+        audioSmoothingValue.textContent = audioSmoothingSlider.value;
+        updateSliderThumb(audioSmoothingSlider, audioSmoothingValue);
+        if (audioAnalyser) audioAnalyser.smoothingTimeConstant = v;
+      });
+
+      const audioVisBtns = document.querySelectorAll(".audio-vis-btn");
+      audioVisBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          audioVisMode = btn.dataset.vis;
+          audioVisBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.vis === audioVisMode));
+        });
+      });
+
+      audioBandBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          audioBand = btn.dataset.band;
+          audioBandBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.band === audioBand));
+        });
+      });
+
+      frequencySlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      angleSlider.addEventListener("input", () => {
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      fullGridBtn.addEventListener("click", () => {
+        fullGrid = !fullGrid;
+        fullGridBtn.classList.toggle("toggle-on", fullGrid);
+        render(accumulatedTime);
+      });
+
+      webcamBtn.addEventListener("click", () => {
+        toggleWebcam();
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? "Play" : "Pause";
+      });
+
+      function updateToggleButton() {
+        const isCollapsed = controlsPanel.classList.contains("collapsed");
+        togglePanelBtn.textContent = isCollapsed ? "☰" : "✕";
+        const panelWidth = window.innerWidth <= 600 ? "98vw" : "260px";
+        togglePanelBtn.style.right = isCollapsed ? "2px" : panelWidth;
+      }
+
+      togglePanelBtn.addEventListener("click", () => {
+        controlsPanel.classList.toggle("collapsed");
+        updateToggleButton();
+      });
+
+      updateToggleButton();
+
+      const randomTextOptions = [
+       "T", "TAURANGA", "KATIKATI", "MAKETU", "PAPAMOA", "ŌMOKOROA", "WAIHI", "TE PUNA", "OHAUITI", "WHAKAMĀRAMA",
+      ];
+
+      resetBtn.addEventListener("click", () => {
+        clearUserFont();
+        input.value = DEFAULT_TEXT;
+        tileSize = 17;
+        gapX = gapY = 0;
+        tideSpeed = 0.50;
+        motionPattern = "crest";
+        waveFrequency = 0.15;
+        angleDeg = 0;
+        textScale = 10;
+        textLineSpacing = 80;
+        letterSpacingPct = 0;
+        alternateShapes = true;
+        transparentBackground = false;
+        fullGrid = false;
+        currentShape = "barrel";
+        isPaused = false;
+        pauseBtn.textContent = "Pause";
+        spacingSlider.value = String(gapX);
+        sizeSlider.value = String(tileSize);
+        speedSlider.value = String(tideSpeed * 100);
+        frequencySlider.value = String(waveFrequency * 100);
+        angleSlider.value = String(angleDeg);
+        textSizeSlider.value = String(textScale);
+        textLineSpacingSlider.value = String(textLineSpacing);
+        letterSpacingSlider.value = String(letterSpacingPct);
+        if (alternateShapesCheck) alternateShapesCheck.checked = true;
+        if (transparentBgCheck) transparentBgCheck.checked = false;
+        setMotionActive(motionPattern);
+        fullGridBtn.classList.remove("toggle-on");
+        document.querySelectorAll(".shape-btn").forEach((b) =>
+          b.classList.toggle("toggle-on", b.dataset.shape === "barrel")
+        );
+        bgImage = null;
+        bgImageData = null;
+        bgImageW = 0;
+        bgImageH = 0;
+        imgBrightness = 0;
+        imgContrast = 0;
+        imgBrightnessSlider.value = "0";
+        imgContrastSlider.value = "0";
+        if (invertImageCheck) invertImageCheck.checked = false;
+        imageControlsEl.style.display = "none";
+        clearImageBtn.style.display = "none";
+        if (audioElement) { audioElement.pause(); audioElement.remove(); audioElement = null; }
+        if (audioSource) { try { audioSource.disconnect(); } catch (_) {} audioSource = null; }
+        audioAnalyser = null;
+        audioGain = null;
+        audioFreqData = null;
+        audioEnergy = 0;
+        audioTideSmooth = 0;
+        audioAmplitude = 2.0;
+        audioBand = "all";
+        audioLooping = false;
+        audioVolumeSlider.value = "50";
+        audioVolumeValue.textContent = "50";
+        updateSliderThumb(audioVolumeSlider, audioVolumeValue);
+        audioAmpSlider.value = "200";
+        audioAmpValue.textContent = "200";
+        updateSliderThumb(audioAmpSlider, audioAmpValue);
+        audioSmoothingSlider.value = "85";
+        audioSmoothingValue.textContent = "85";
+        updateSliderThumb(audioSmoothingSlider, audioSmoothingValue);
+        audioControlsEl.style.display = "none";
+        clearAudioBtn.style.display = "none";
+        audioVisMode = "waveform";
+        audioSpectrumSmooth = null;
+        audioLoopBtn.classList.remove("toggle-on");
+        audioBandBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.band === "all"));
+        audioVisBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.vis === "waveform"));
+        if (webcamActive) {
+          toggleWebcam();
+        }
+        accumulatedTime = 0;
+        lastFrameTimestamp = 0;
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      randomiseBtn.addEventListener("click", () => {
+        const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const preferNarrow = Math.random() < 10 / 11; // 10x more likely: narrow range
+        const spacing = preferNarrow ? randInt(0, 10) : randInt(0, 20);
+        const size = preferNarrow ? randInt(8, 20) : randInt(8, 40);
+        input.value = randomTextOptions[randInt(0, randomTextOptions.length - 1)];
+        spacingSlider.value = String(spacing);
+        sizeSlider.value = String(size);
+        textSizeSlider.value = String(randInt(3, 10));
+        speedSlider.value = String(randInt(0, 200));
+        frequencySlider.value = String(randInt(5, 200));
+        angleSlider.value = String(randInt(0, 360));
+        const motions = ["ebb", "flow", "swell", "crest", "surge", "storm", "none"];
+        motionPattern = motions[randInt(0, motions.length - 1)];
+        setMotionActive(motionPattern);
+        const pickKeys = visibleShapeKeys();
+        currentShape = pickKeys[randInt(0, pickKeys.length - 1)];
+        shapeBtns.forEach((b) => b.classList.toggle("toggle-on", b.dataset.shape === currentShape));
+        if (alternateShapesCheck) alternateShapesCheck.checked = Math.random() < 0.5;
+        updateFromControls();
+        render(accumulatedTime);
+      });
+
+      downloadBtn.addEventListener("click", () => {
+        const rect = canvas.getBoundingClientRect();
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = rect.width;
+        exportCanvas.height = rect.height;
+        const exportCtx = exportCanvas.getContext("2d");
+        exportCtx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+        exportCanvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "tide-grid.png";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      });
+
+      // Initial setup
+      window.addEventListener("load", () => {
+        resizeCanvas();
+        input.value = DEFAULT_TEXT;
+        setMotionActive(motionPattern);
+        spacingSlider.value = String(gapX);
+        sizeSlider.value = String(tileSize);
+        textSizeSlider.value = String(textScale);
+        textLineSpacingSlider.value = String(textLineSpacing);
+        letterSpacingSlider.value = String(letterSpacingPct);
+        speedSlider.value = String(tideSpeed * 100);
+        frequencySlider.value = String(waveFrequency * 100);
+        angleSlider.value = String(angleDeg);
+        attachSmoothSlider(spacingSlider, spacingValue);
+        attachSmoothSlider(sizeSlider, sizeValue);
+        attachSmoothSlider(textSizeSlider, textSizeValue);
+        attachSmoothSlider(textLineSpacingSlider, textLineSpacingValue);
+        attachSmoothSlider(letterSpacingSlider, letterSpacingValue);
+        attachSmoothSlider(speedSlider, speedValue);
+        attachSmoothSlider(frequencySlider, frequencyValue);
+        attachSmoothSlider(angleSlider, angleValue);
+        attachSmoothSlider(imgBrightnessSlider, imgBrightnessValue);
+        attachSmoothSlider(imgContrastSlider, imgContrastValue);
+        attachSmoothSlider(audioVolumeSlider, audioVolumeValue);
+        attachSmoothSlider(audioAmpSlider, audioAmpValue);
+        attachSmoothSlider(audioSmoothingSlider, audioSmoothingValue);
+        audioAmplitude = Number(audioAmpSlider.value) / 100;
+        requestAnimationFrame(() => {
+          updateFromControls();
+          updateSliderThumb(audioVolumeSlider, audioVolumeValue);
+          updateSliderThumb(audioAmpSlider, audioAmpValue);
+          updateSliderThumb(audioSmoothingSlider, audioSmoothingValue);
+          requestAnimationFrame(animate);
+        });
+      });
+    </script>
+  </body>
+</html>
+
